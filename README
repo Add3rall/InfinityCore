@@ -1,7 +1,7 @@
 = InfinityCore -- General information =
 
 #################################################
-#     Supporting Core 5.0.5(16135) (5.0.5b)     #
+#         Supporting Core 2.4.3(8606)           #
 #################################################
 
 Copyright (C) InfinityCore (http://www.realmsofwarcraft.us)
@@ -41,7 +41,7 @@ make pull requests to our github repo at
 https://github.com/InfinityCore/InfinityCore
 
 For further information on the InfinityCore project, please visit our
-project website at http://www.realmsofwarcraft.us
+project website at http://www.realmsofwarcraft.com
 
 Documentation including installation instructions can be found inside
 the doc directory.

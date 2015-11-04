@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -16,196 +16,138 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* ScriptData
+SDName: Instance_ZulGurub
+SD%Complete: 80
+SDComment: Missing reset function after killing a boss for Ohgan, Thekal.
+SDCategory: Zul'Gurub
+EndScriptData */
+
 #include "ScriptMgr.h"
 #include "InstanceScript.h"
 #include "zulgurub.h"
 
+DoorData const doorData[] =
+{
+    { GO_FORCEFIELD, DATA_ARLOKK, DOOR_TYPE_ROOM, BOUNDARY_NONE },
+    { 0,             0,           DOOR_TYPE_ROOM, BOUNDARY_NONE } // END
+};
+
 class instance_zulgurub : public InstanceMapScript
 {
-    public:
-        instance_zulgurub() : InstanceMapScript(ZGScriptName, 859) { }
+    public: instance_zulgurub(): InstanceMapScript(ZGScriptName, 309) { }
 
         struct instance_zulgurub_InstanceMapScript : public InstanceScript
         {
             instance_zulgurub_InstanceMapScript(Map* map) : InstanceScript(map)
             {
+                SetHeaders(DataHeader);
                 SetBossNumber(EncounterCount);
-                venoxisGUID     = 0;
-                mandokirGUID    = 0;
-                kilnaraGUID     = 0;
-                zanzilGUID      = 0;
-                jindoGUID       = 0;
-                hazzarahGUID    = 0;
-                renatakiGUID    = 0;
-                wushoolayGUID   = 0;
-                grilekGUID      = 0;
+                LoadDoorData(doorData);
             }
 
-            void OnCreatureCreate(Creature* creature)
+            bool IsEncounterInProgress() const override
+            {
+                // not active in Zul'Gurub
+                return false;
+            }
+
+            void OnCreatureCreate(Creature* creature) override
             {
                 switch (creature->GetEntry())
                 {
-                   case NPC_VENOXIS:
-                      venoxisGUID = creature->GetGUID();
-                      break;
-                   case NPC_MANDOKIR:
-                      mandokirGUID = creature->GetGUID();
-                      break;
-                   case NPC_KILNARA:
-                      kilnaraGUID = creature->GetGUID();
-                      break;
-                   case NPC_ZANZIL:
-                      zanzilGUID = creature->GetGUID();
-                      break;
-                   case NPC_JINDO:
-                      jindoGUID = creature->GetGUID();
-                      break;
-                   case NPC_HAZZARAH:
-                      hazzarahGUID = creature->GetGUID();
-                      break;
-                   case NPC_RENATAKI:
-                      renatakiGUID = creature->GetGUID();
-                      break;
-                   case NPC_WUSHOOLAY:
-                      wushoolayGUID = creature->GetGUID();
-                      break;
-                   case NPC_GRILEK:
-                      grilekGUID = creature->GetGUID();
-                      break;
-                   default:
-                      break;
+                    case NPC_ZEALOT_LORKHAN:
+                        _zealotLorkhanGUID = creature->GetGUID();
+                        break;
+                    case NPC_ZEALOT_ZATH:
+                        _zealotZathGUID = creature->GetGUID();
+                        break;
+                    case NPC_HIGH_PRIEST_THEKAL:
+                        _highPriestTekalGUID = creature->GetGUID();
+                        break;
+                    case NPC_JINDO_THE_HEXXER:
+                        _jindoTheHexxerGUID = creature->GetGUID();
+                        break;
+                    case NPC_VILEBRANCH_SPEAKER:
+                        _vilebranchSpeakerGUID = creature->GetGUID();
+                        break;
+                    case NPC_ARLOKK:
+                        _arlokkGUID = creature->GetGUID();
+                        break;
                 }
             }
 
-            bool SetBossState(uint32 type, EncounterState state)
+            void OnGameObjectCreate(GameObject* go) override
             {
-                if (!InstanceScript::SetBossState(type, state))
-                    return false;
-
-                switch (type)
+                switch (go->GetEntry())
                 {
-                   case DATA_VENOXIS:
-                   case DATA_MANDOKIR:
-                   case DATA_KILNARA:
-                   case DATA_ZANZIL:
-                   case DATA_JINDO:
-                   case DATA_HAZZARAH:
-                   case DATA_RENATAKI:
-                   case DATA_WUSHOOLAY:
-                   case DATA_GRILEK:
-                      break;
-                   default:
-                      break;
-                }
-
-                return true;
-            }
-
-            /*
-            void SetData(uint32 type, uint32 data)
-            {
-                switch (type)
-                {
-                }
-            }
-
-            uint32 GetData(uint32 type)
-            {
-                switch (type)
-                {
-                }
-
-                return 0;
-            }
-            */
-
-            uint64 GetData64(uint32 type)
-            {
-                switch (type)
-                {
-                    case DATA_VENOXIS:
-                        return venoxisGUID;
-                    case DATA_MANDOKIR:
-                        return mandokirGUID;
-                    case DATA_KILNARA:
-                        return kilnaraGUID;
-                    case DATA_ZANZIL:
-                        return zanzilGUID;
-                    case DATA_JINDO:
-                        return jindoGUID;
-                    case DATA_HAZZARAH:
-                        return hazzarahGUID;
-                    case DATA_RENATAKI:
-                        return renatakiGUID;
-                    case DATA_WUSHOOLAY:
-                        return wushoolayGUID;
-                    case DATA_GRILEK:
-                        return grilekGUID;
+                    case GO_FORCEFIELD:
+                        AddDoor(go, true);
+                        break;
+                    case GO_GONG_OF_BETHEKK:
+                        _goGongOfBethekkGUID = go->GetGUID();
+                        if (GetBossState(DATA_ARLOKK) == DONE)
+                            go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                        else
+                            go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                        break;
                     default:
                         break;
-
                 }
-
-                return 0;
             }
 
-            std::string GetSaveData()
+            void OnGameObjectRemove(GameObject* go) override
             {
-                OUT_SAVE_INST_DATA;
-
-                std::ostringstream saveStream;
-                saveStream << "Z G " << GetBossSaveData();
-
-                OUT_SAVE_INST_DATA_COMPLETE;
-                return saveStream.str();
+                switch (go->GetEntry())
+                {
+                    case GO_FORCEFIELD:
+                        AddDoor(go, false);
+                        break;
+                    default:
+                        break;
+                }
             }
 
-            void Load(char const* str)
+            ObjectGuid GetGuidData(uint32 uiData) const override
             {
-                if (!str)
+                switch (uiData)
                 {
-                    OUT_LOAD_INST_DATA_FAIL;
-                    return;
+                    case DATA_LORKHAN:
+                        return _zealotLorkhanGUID;
+                        break;
+                    case DATA_ZATH:
+                        return _zealotZathGUID;
+                        break;
+                    case DATA_THEKAL:
+                        return _highPriestTekalGUID;
+                        break;
+                    case DATA_JINDO:
+                        return _jindoTheHexxerGUID;
+                        break;
+                    case NPC_ARLOKK:
+                        return _arlokkGUID;
+                        break;
+                    case GO_GONG_OF_BETHEKK:
+                        return _goGongOfBethekkGUID;
+                        break;
                 }
-
-                OUT_LOAD_INST_DATA(str);
-
-                char dataHead1, dataHead2;
-
-                std::istringstream loadStream(str);
-                loadStream >> dataHead1 >> dataHead2;
-
-                if (dataHead1 == 'Z' && dataHead2 == 'G')
-                {
-                    for (uint8 i = 0; i < EncounterCount; ++i)
-                    {
-                        uint32 tmpState;
-                        loadStream >> tmpState;
-                        if (tmpState == IN_PROGRESS || tmpState > SPECIAL)
-                            tmpState = NOT_STARTED;
-
-                        SetBossState(i, EncounterState(tmpState));
-                    }
-                }
-                else
-                    OUT_LOAD_INST_DATA_FAIL;
-
-                OUT_LOAD_INST_DATA_COMPLETE;
+                return ObjectGuid::Empty;
             }
 
-        protected:
-             uint64 venoxisGUID;
-             uint64 mandokirGUID;
-             uint64 kilnaraGUID;
-             uint64 zanzilGUID;
-             uint64 jindoGUID;
-             uint64 hazzarahGUID;
-             uint64 renatakiGUID;
-             uint64 wushoolayGUID;
-             uint64 grilekGUID;
+        private:
+            //If all High Priest bosses were killed. Lorkhan, Zath and Ohgan are added too.
+            //Storing Lorkhan, Zath and Thekal because we need to cast on them later. Jindo is needed for healfunction too.
+
+            ObjectGuid _zealotLorkhanGUID;
+            ObjectGuid _zealotZathGUID;
+            ObjectGuid _highPriestTekalGUID;
+            ObjectGuid _jindoTheHexxerGUID;
+            ObjectGuid _vilebranchSpeakerGUID;
+            ObjectGuid _arlokkGUID;
+            ObjectGuid _goGongOfBethekkGUID;
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const
+        InstanceScript* GetInstanceScript(InstanceMap* map) const override
         {
             return new instance_zulgurub_InstanceMapScript(map);
         }

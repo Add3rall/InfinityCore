@@ -1,7 +1,30 @@
+/*
+ * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #define _CRT_SECURE_NO_DEPRECATE
 
 #include "loadlib.h"
+#include "mpq_libmpq04.h"
 #include <cstdio>
+
+class MPQFile;
+
+u_map_fcc MverMagic = { {'R','E','V','M'} };
 
 FileLoader::FileLoader()
 {
@@ -15,31 +38,27 @@ FileLoader::~FileLoader()
     free();
 }
 
-bool FileLoader::loadFile(HANDLE mpq, char* filename, bool log)
+bool FileLoader::loadFile(char *filename, bool log)
 {
     free();
-    HANDLE file;
-    if (!SFileOpenFileEx(mpq, filename, SFILE_OPEN_PATCHED_FILE, &file))
+    MPQFile mf(filename);
+    if(mf.isEof())
     {
         if (log)
             printf("No such file %s\n", filename);
         return false;
     }
 
-    data_size = SFileGetFileSize(file, NULL);
-    data = new uint8[data_size];
-    if (data)
-    {
-        SFileReadFile(file, data, data_size, NULL/*bytesRead*/, NULL);
-        if (prepareLoadedData())
-        {
-            SFileCloseFile(file);
-            return true;
-        }
-    }
+    data_size = mf.getSize();
 
-    printf("Error loading %s\n", filename);
-    SFileCloseFile(file);
+    data = new uint8 [data_size];
+    mf.read(data, data_size);
+    mf.close();
+    if (prepareLoadedData())
+        return true;
+
+    printf("Error loading %s", filename);
+    mf.close();
     free();
     return false;
 }
@@ -48,7 +67,7 @@ bool FileLoader::prepareLoadedData()
 {
     // Check version
     version = (file_MVER *) data;
-    if (version->fcc != 'MVER')
+    if (version->fcc != MverMagic.fcc)
         return false;
     if (version->ver != FILE_FORMAT_VERSION)
         return false;

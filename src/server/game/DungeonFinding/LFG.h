@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,6 +19,10 @@
 #define _LFG_H
 
 #include "Common.h"
+#include "ObjectGuid.h"
+
+namespace lfg
+{
 
 enum LFGEnum
 {
@@ -41,7 +45,7 @@ enum LfgUpdateType
     LFG_UPDATETYPE_DEFAULT                       = 0,      // Internal Use
     LFG_UPDATETYPE_LEADER_UNK1                   = 1,      // FIXME: At group leave
     LFG_UPDATETYPE_ROLECHECK_ABORTED             = 4,
-    LFG_UPDATETYPE_JOIN_PROPOSAL                 = 5,
+    LFG_UPDATETYPE_JOIN_QUEUE                    = 5,
     LFG_UPDATETYPE_ROLECHECK_FAILED              = 6,
     LFG_UPDATETYPE_REMOVED_FROM_QUEUE            = 7,
     LFG_UPDATETYPE_PROPOSAL_FAILED               = 8,
@@ -60,8 +64,8 @@ enum LfgState
     LFG_STATE_ROLECHECK,                                   // Rolecheck active
     LFG_STATE_QUEUED,                                      // Queued
     LFG_STATE_PROPOSAL,                                    // Proposal active
-    LFG_STATE_BOOT,                                        // Vote kick active
-    LFG_STATE_DUNGEON,                                     // In LFG Group, in a Dungeon
+    //LFG_STATE_BOOT,                                      // Vote kick active
+    LFG_STATE_DUNGEON = 5,                                 // In LFG Group, in a Dungeon
     LFG_STATE_FINISHED_DUNGEON,                            // In LFG Group, in a finished Dungeon
     LFG_STATE_RAIDBROWSER                                  // Using Raid finder
 };
@@ -93,10 +97,14 @@ enum LfgAnswer
 
 typedef std::set<uint32> LfgDungeonSet;
 typedef std::map<uint32, uint32> LfgLockMap;
-typedef std::map<uint64, LfgLockMap> LfgLockPartyMap;
-typedef std::set<uint64> LfgGuidSet;
-typedef std::list<uint64> LfgGuidList;
-typedef std::map<uint64, uint8> LfgRolesMap;
-typedef std::map<uint64, uint64> LfgGroupsMap;
+typedef std::map<ObjectGuid, LfgLockMap> LfgLockPartyMap;
+typedef std::map<ObjectGuid, uint8> LfgRolesMap;
+typedef std::map<ObjectGuid, ObjectGuid> LfgGroupsMap;
+
+std::string ConcatenateDungeons(LfgDungeonSet const& dungeons);
+std::string GetRolesString(uint8 roles);
+std::string GetStateString(LfgState state);
+
+} // namespace lfg
 
 #endif

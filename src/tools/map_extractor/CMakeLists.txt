@@ -1,5 +1,5 @@
 # Copyright (C) 2005-2009 MaNGOS project <http://getmangos.com/>
-# Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+# Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -11,24 +11,31 @@
 
 file(GLOB_RECURSE sources *.cpp *.h)
 
-include_directories (
-  ${CMAKE_SOURCE_DIR}/src/server/shared
-  ${CMAKE_SOURCE_DIR}/dep/StormLib/src
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/loadlib
+set(include_Dirs
+    ${CMAKE_SOURCE_DIR}/src/server/shared
+    ${CMAKE_SOURCE_DIR}/dep/libmpq
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/loadlib
 )
+
+if( WIN32 )
+  set(include_Dirs
+    ${include_Dirs}
+    ${CMAKE_SOURCE_DIR}/dep/libmpq/win
+  )
+endif()
+
+include_directories(${include_Dirs})
 
 add_executable(mapextractor
   ${sources}
 )
 
 target_link_libraries(mapextractor
+  mpq
   ${BZIP2_LIBRARIES}
   ${ZLIB_LIBRARIES}
-  storm
 )
-
-add_dependencies(mapextractor storm)
 
 if( UNIX )
   install(TARGETS mapextractor DESTINATION bin)
